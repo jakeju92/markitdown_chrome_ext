@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>MarkItDown Settings</title>
+  <style>
+    body {
+      width: 100%;
+      min-height: 100vh;
+      margin: 0;
+      padding: 20px;
+      box-sizing: border-box;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      background-color: #f5f5f5;
+    }
+    .container {
+      width: 100%;
+      max-width: 500px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      background-color: white;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+    .section {
+      border: 1px solid #eee;
+      padding: 20px;
+      border-radius: 6px;
+      background-color: #fafafa;
+    }
+    h2 {
+      margin-top: 0;
+      color: #333;
+      font-size: 1.5em;
+      margin-bottom: 20px;
+    }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    label {
+      display: block;
+      margin-bottom: 8px;
+      color: #555;
+      font-weight: 500;
+    }
+    input, select {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 14px;
+      box-sizing: border-box;
+    }
+    input:focus, select:focus {
+      outline: none;
+      border-color: #2196F3;
+      box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.1);
+    }
+    button {
+      background: #2196F3;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      transition: background-color 0.2s;
+    }
+    button:hover {
+      background: #1976D2;
+    }
+    .status {
+      margin-top: 10px;
+      padding: 12px;
+      border-radius: 4px;
+      display: none;
+      font-size: 14px;
+    }
+    .success {
+      background: #E8F5E9;
+      color: #2E7D32;
+      border: 1px solid #A5D6A7;
+    }
+    .error {
+      background: #FFEBEE;
+      color: #C62828;
+      border: 1px solid #FFCDD2;
+    }
+    .info {
+      background: #E3F2FD;
+      color: #1565C0;
+      border: 1px solid #90CAF9;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="section">
+      <h2>API Settings</h2>
+      <div class="form-group">
+        <label for="aiProvider">Default AI Provider:</label>
+        <select id="aiProvider">
+          <option value="openai">OpenAI</option>
+          <option value="ollama">Ollama</option>
+        </select>
+      </div>
+
+      <div id="openaiSettings">
+        <div class="form-group">
+          <label for="openaiKey">OpenAI API Key:</label>
+          <input type="password" id="openaiKey" placeholder="sk-...">
+        </div>
+        <div class="form-group">
+          <label for="openaiModel">Model:</label>
+          <select id="openaiModel">
+            <option value="gpt-4">GPT-4</option>
+            <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+          </select>
+        </div>
+      </div>
+      
+      <div id="ollamaSettings" style="display: none;">
+        <div class="form-group">
+          <label for="ollamaEndpoint">Ollama Endpoint:</label>
+          <input type="text" id="ollamaEndpoint" value="http://localhost:11434" placeholder="e.g., http://localhost:11434">
+        </div>
+        <div class="form-group">
+          <label for="ollamaModel">Model Name:</label>
+          <input type="text" id="ollamaModel" placeholder="e.g., llama2, qwen2.5:7b">
+        </div>
+      </div>
+    </div>
+
+    <button id="saveSettings">Save Settings</button>
+    <div id="status" class="status"></div>
+  </div>
+  <script src="settings.js"></script>
+</body>
+</html> 

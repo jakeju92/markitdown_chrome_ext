@@ -37,39 +37,6 @@ async function generateOpenAISummary(content, prompt, apiKey, model) {
   return data.choices[0].message.content.trim();
 }
 
-// Task queue implementation
-class TaskQueue {
-  constructor() {
-    this.queue = [];
-    this.isProcessing = false;
-  }
-
-  async addTask(task) {
-    this.queue.push(task);
-    if (!this.isProcessing) {
-      await this.processQueue();
-    }
-  }
-
-  async processQueue() {
-    if (this.isProcessing || this.queue.length === 0) return;
-    
-    this.isProcessing = true;
-    while (this.queue.length > 0) {
-      const task = this.queue[0];
-      try {
-        await task();
-      } catch (error) {
-        console.error('Task processing error:', error);
-      }
-      this.queue.shift();
-    }
-    this.isProcessing = false;
-  }
-}
-
-const taskQueue = new TaskQueue();
-
 // Function to generate summary using Ollama
 async function generateOllamaSummary(content, prompt, endpoint, model) {
   try {
@@ -170,18 +137,30 @@ async function updateMarkdownWithSummary(filePath, summary) {
       summarySection + summary
     );
     
-    // Write the updated content back to the file
+    // Write the updated content back to the file using chrome.downloads.download
     const blob = new Blob([newContent], { type: 'text/markdown' });
-    const writer = await window.showSaveFilePicker({
-      suggestedName: filePath.split('/').pop(),
-      types: [{
-        description: 'Markdown files',
-        accept: { 'text/markdown': ['.md'] }
-      }]
+    const reader = new FileReader();
+    const dataUrl = await new Promise((resolve, reject) => {
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = () => reject(new Error('Failed to create data URL'));
+      reader.readAsDataURL(blob);
     });
-    const writable = await writer.createWritable();
-    await writable.write(blob);
-    await writable.close();
+    
+    // Use chrome.downloads.download with data URL
+    const filename = filePath.split('/').pop();
+    const downloadId = await new Promise((resolve, reject) => {
+      chrome.downloads.download({
+        url: dataUrl,
+        filename: filename,
+        saveAs: true
+      }, (downloadId) => {
+        if (chrome.runtime.lastError) {
+          reject(chrome.runtime.lastError);
+        } else {
+          resolve(downloadId);
+        }
+      });
+    });
     
     return true;
   } catch (error) {
@@ -200,57 +179,34 @@ async function checkOllamaConnection(endpoint, model) {
     if (!endpoint.startsWith('http://') && !endpoint.startsWith('https://')) {
       endpoint = 'http://' + endpoint;
     }
-
-    // First check if the server is running
-    try {
-      const versionResponse = await fetch(`${endpoint}/api/version`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
-      
-      if (!versionResponse.ok) {
-        throw new Error(`Server returned ${versionResponse.status}: ${versionResponse.statusText}`);
+    
+    // Test connection with a simple request
+    const response = await fetch(`${endpoint}/api/tags`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Origin': chrome.runtime.getURL(''),
+        'Access-Control-Allow-Origin': '*'
       }
-      
-      const versionData = await versionResponse.json();
-      console.log('Ollama version:', versionData.version);
-    } catch (error) {
-      console.error('Ollama server check failed:', error);
-      throw new Error(`Could not connect to Ollama server at ${endpoint}. Please check if the server is running.`);
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Ollama server returned status ${response.status}: ${response.statusText}`);
     }
     
-    // Then check if the model is available
-    try {
-      const modelResponse = await fetch(`${endpoint}/api/tags`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
-      
-      if (!modelResponse.ok) {
-        throw new Error(`Server returned ${modelResponse.status}: ${modelResponse.statusText}`);
-      }
-      
-      const modelData = await modelResponse.json();
-      console.log('Available models:', modelData.models);
-      
-      const modelExists = modelData.models.some(m => m.name === model);
+    const data = await response.json();
+    console.log('Ollama connection successful, available models:', data);
+    
+    // Check if the specified model is available
+    if (model && data.models) {
+      const modelExists = data.models.some(m => m.name === model);
       if (!modelExists) {
-        throw new Error(`Model "${model}" not found. Please pull the model first with: ollama pull ${model}`);
-      }
-    } catch (error) {
-      console.error('Ollama model check failed:', error);
-      if (error.message.includes('Model')) {
-        throw error;
-      } else {
-        throw new Error(`Could not check available models. Please ensure Ollama server is running correctly.`);
+        throw new Error(`Model "${model}" not found on Ollama server. Available models: ${data.models.map(m => m.name).join(', ')}`);
       }
     }
     
-    // Connection successful
+    // Send success message to popup
     chrome.runtime.sendMessage({
       action: "connectionStatus",
       status: "success"
@@ -268,6 +224,58 @@ async function checkOllamaConnection(endpoint, model) {
   }
 }
 
+// Track which tabs have content scripts ready
+const contentScriptReadyTabs = new Set();
+
+// Function to check if content script is ready in a tab
+async function isContentScriptReady(tabId) {
+  // If we already know it's ready, return true
+  if (contentScriptReadyTabs.has(tabId)) {
+    return true;
+  }
+  
+  // Otherwise, ping the content script
+  try {
+    const response = await new Promise((resolve, reject) => {
+      chrome.tabs.sendMessage(tabId, { action: "ping" }, response => {
+        if (chrome.runtime.lastError) {
+          reject(chrome.runtime.lastError);
+        } else {
+          resolve(response);
+        }
+      });
+    });
+    
+    if (response && response.success) {
+      contentScriptReadyTabs.add(tabId);
+      return true;
+    }
+    return false;
+  } catch (error) {
+    console.log('Content script not ready:', error.message);
+    return false;
+  }
+}
+
+// Listen for content script ready messages
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.action === "contentScriptReady" && sender.tab && sender.tab.id) {
+    console.log('Content script ready in tab:', sender.tab.id);
+    contentScriptReadyTabs.add(sender.tab.id);
+    sendResponse({ received: true });
+    return false;
+  }
+  return true;
+});
+
+// Clean up when tabs are closed
+chrome.tabs.onRemoved.addListener((tabId) => {
+  if (contentScriptReadyTabs.has(tabId)) {
+    contentScriptReadyTabs.delete(tabId);
+    console.log('Removed tab from ready list:', tabId);
+  }
+});
+
 // Message handler for content script
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === "convert") {
@@ -277,116 +285,191 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         chrome.runtime.sendMessage({
           action: "error",
           error: "No valid tab found. Please try again on a webpage."
-        });
+        }).catch(err => console.error('Error sending message:', err));
         return;
       }
       
-      // Add the conversion task to the queue
-      taskQueue.addTask(async () => {
-        try {
-          // Get settings
-          const settings = await chrome.storage.local.get([
-            'aiProvider',
-            'openaiKey',
-            'openaiModel',
-            'ollamaEndpoint',
-            'ollamaModel'
-          ]);
+      // Execute conversion task directly instead of using queue
+      try {
+        // Get settings
+        const settings = await chrome.storage.local.get([
+          'aiProvider',
+          'openaiKey',
+          'openaiModel',
+          'ollamaEndpoint',
+          'ollamaModel'
+        ]);
 
-          // Send progress update
-          chrome.runtime.sendMessage({
+        // Send progress update
+        try {
+          await chrome.runtime.sendMessage({
             action: "progress",
             message: "Extracting page content..."
           });
+        } catch (error) {
+          console.warn('Could not send progress message, popup might be closed:', error);
+          // Continue with the process even if we can't update the UI
+        }
 
-          // Send message to content script to extract content
-          const response = await new Promise((resolve, reject) => {
-            chrome.tabs.sendMessage(tabs[0].id, { action: "convert" }, (response) => {
-              if (chrome.runtime.lastError) {
-                reject(chrome.runtime.lastError);
-              } else {
-                resolve(response);
-              }
+        // Check if the tab still exists before sending message
+        const tabExists = await new Promise(resolve => {
+          chrome.tabs.get(tabs[0].id, tab => {
+            resolve(!chrome.runtime.lastError && tab);
+          });
+        });
+
+        if (!tabExists) {
+          throw new Error('The tab no longer exists. Please try again on an open webpage.');
+        }
+        
+        // Check if content script is ready
+        const contentScriptReady = await isContentScriptReady(tabs[0].id);
+        if (!contentScriptReady) {
+          // Try to inject the content script
+          try {
+            await chrome.scripting.executeScript({
+              target: { tabId: tabs[0].id },
+              files: ['turndown.js', 'content.js']
             });
-          });
-
-          if (!response.success) {
-            throw new Error(response.error || 'Failed to extract content from the page');
+            
+            // Wait a bit for the content script to initialize
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            // Check again
+            const retryReady = await isContentScriptReady(tabs[0].id);
+            if (!retryReady) {
+              throw new Error('Content script could not be initialized. Please refresh the page and try again.');
+            }
+          } catch (error) {
+            throw new Error('Failed to inject content script: ' + error.message);
           }
+        }
 
-          const { title, content } = response;
-
-          // Create initial markdown content without summary
-          const initialMarkdown = `# ${title}\n\n## AI-Generated Summary\n\nGenerating summary...\n\n## Original Content\n\n${content}`;
-
-          // Show save dialog
-          const handle = await window.showSaveFilePicker({
-            suggestedName: `${title.replace(/[^a-z0-9\u4e00-\u9fa5]/gi, '_').toLowerCase()}.md`,
-            types: [{
-              description: 'Markdown files',
-              accept: { 'text/markdown': ['.md'] }
-            }]
+        // Send message to content script to extract content
+        const response = await new Promise((resolve, reject) => {
+          chrome.tabs.sendMessage(tabs[0].id, { action: "convert" }, response => {
+            if (chrome.runtime.lastError) {
+              // Check if it's the "receiving end does not exist" error
+              if (chrome.runtime.lastError.message.includes('Receiving end does not exist')) {
+                reject(new Error('Content script is not ready. Please refresh the page and try again.'));
+              } else {
+                reject(chrome.runtime.lastError);
+              }
+            } else if (!response) {
+              reject(new Error('No response from content script. Please refresh the page and try again.'));
+            } else {
+              resolve(response);
+            }
           });
+        });
 
-          // Save initial content
-          const writable = await handle.createWritable();
-          await writable.write(initialMarkdown);
-          await writable.close();
+        if (!response.success) {
+          throw new Error(response.error || 'Failed to extract content from the page');
+        }
 
-          // Generate summary
-          chrome.runtime.sendMessage({
+        const { title, content, url } = response;
+
+        // Create initial markdown content without summary
+        const initialMarkdown = `# ${title}\n\n## AI-Generated Summary\n\nGenerating summary...\n\n## Original Content\n\n[Original website](${url})\n\n${content}`;
+
+        // Send progress update for summary generation
+        try {
+          await chrome.runtime.sendMessage({
             action: "progress",
             message: "Generating AI summary..."
           });
+        } catch (error) {
+          console.warn('Could not send progress message, popup might be closed:', error);
+          // Continue with the process even if we can't update the UI
+        }
 
-          let summary;
-          if (settings.aiProvider === 'ollama') {
-            try {
-              summary = await generateOllamaSummary(
-                content,
-                message.prompt || "Please provide a comprehensive summary of this content.",
-                settings.ollamaEndpoint,
-                settings.ollamaModel
-              );
-            } catch (error) {
-              console.error('Summary generation error:', error);
-              summary = "Failed to generate summary: " + error.message;
-            }
-          } else {
-            throw new Error('Only Ollama is supported for now');
+        // Generate summary
+        let summary;
+        if (settings.aiProvider === 'ollama') {
+          try {
+            summary = await generateOllamaSummary(
+              content,
+              message.prompt || "Please provide a comprehensive summary of this content.",
+              settings.ollamaEndpoint,
+              settings.ollamaModel
+            );
+          } catch (error) {
+            console.error('Summary generation error:', error);
+            summary = "Failed to generate summary: " + error.message;
           }
+        } else {
+          throw new Error('Only Ollama is supported for now');
+        }
 
-          // Update the file with the summary
-          chrome.runtime.sendMessage({
+        // Update the file with the summary
+        try {
+          await chrome.runtime.sendMessage({
             action: "progress",
-            message: "Updating file with summary..."
+            message: "Saving file with summary..."
           });
+        } catch (error) {
+          console.warn('Could not send progress message, popup might be closed:', error);
+          // Continue with the process even if we can't update the UI
+        }
 
-          const finalMarkdown = `# ${title}\n\n## AI-Generated Summary\n\n${summary}\n\n## Original Content\n\n${content}`;
-          
-          // Save final content
-          const finalWritable = await handle.createWritable();
-          await finalWritable.write(finalMarkdown);
-          await finalWritable.close();
+        // Create the final markdown with the summary
+        const finalMarkdown = `# ${title}\n\n## AI-Generated Summary\n\n${summary}\n\n## Original Content\n\n[Original website](${url})\n\n${content}`;
+        
+        // Create a Blob with the final content and use data URL
+        const finalBlob = new Blob([finalMarkdown], { type: 'text/markdown' });
+        const finalDataUrl = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result);
+          reader.onerror = () => reject(new Error('Failed to create data URL'));
+          reader.readAsDataURL(finalBlob);
+        });
+        
+        // Download the final file
+        const finalFilename = `${title.replace(/[^a-z0-9\u4e00-\u9fa5]/gi, '_').toLowerCase()}.md`;
+        await new Promise((resolve, reject) => {
+          chrome.downloads.download({
+            url: finalDataUrl,
+            filename: finalFilename,
+            saveAs: true
+          }, (downloadId) => {
+            if (chrome.runtime.lastError) {
+              reject(chrome.runtime.lastError);
+            } else {
+              resolve(downloadId);
+            }
+          });
+        });
+        
+        // No need to revoke data URLs
 
-          // Send completion message
-          chrome.runtime.sendMessage({
+        // Send completion message
+        try {
+          await chrome.runtime.sendMessage({
             action: "progress",
             message: "Conversion and summary completed successfully!"
           });
-
         } catch (error) {
-          console.error('Task error:', error);
-          chrome.runtime.sendMessage({
+          console.warn('Could not send completion message, popup might be closed:', error);
+          // Process completed successfully even if we can't update the UI
+        }
+
+      } catch (error) {
+        console.error('Conversion error:', error);
+        try {
+          await chrome.runtime.sendMessage({
             action: "error",
             error: error.message
           });
+        } catch (msgError) {
+          console.warn('Could not send error message, popup might be closed:', msgError);
         }
-      });
+      }
     });
   } else if (message.action === "checkOllamaConnection") {
     // Check Ollama connection
-    checkOllamaConnection(message.endpoint, message.model);
+    checkOllamaConnection(message.endpoint, message.model).catch(error => {
+      console.error('Error checking Ollama connection:', error);
+    });
   }
 });
 

@@ -27,6 +27,28 @@ const defaultPresetPrompts = {
 
 let presetPrompts = { ...defaultPresetPrompts };
 
+// Save popup state before it closes
+window.addEventListener('beforeunload', () => {
+  savePopupState();
+});
+
+// Function to save popup state
+function savePopupState() {
+  const state = {
+    summaryPrompt: document.getElementById('summaryPrompt').value,
+    contentType: document.getElementById('contentType').value,
+    aiProvider: document.getElementById('aiProvider').value,
+    progressVisible: document.getElementById('progress').style.display === 'block',
+    progressText: document.getElementById('progressText').textContent,
+    errorVisible: document.getElementById('errorDisplay').style.display === 'block',
+    errorText: document.getElementById('errorDisplay').textContent,
+    convertBtnDisabled: document.getElementById('convertBtn').disabled,
+    convertBtnText: document.getElementById('convertBtn').textContent
+  };
+  
+  chrome.storage.local.set({ popupState: state });
+}
+
 // Load saved settings and prompts
 document.addEventListener('DOMContentLoaded', async () => {
   try {
@@ -36,13 +58,15 @@ document.addEventListener('DOMContentLoaded', async () => {
       'customPresets',
       'aiProvider',
       'ollamaEndpoint',
-      'ollamaModel'
+      'ollamaModel',
+      'popupState'
     ]);
 
     if (result.customPresets) {
       presetPrompts = { ...defaultPresetPrompts, ...result.customPresets };
     }
     
+    // First restore the basic settings
     if (result.contentType) {
       document.getElementById('contentType').value = result.contentType;
     }
@@ -59,18 +83,78 @@ document.addEventListener('DOMContentLoaded', async () => {
       document.getElementById('aiProvider').value = result.aiProvider;
     }
 
-    // Run content type detection
-    detectContentType();
-    
-    // 移除自动连接测试
-    // if (result.aiProvider === 'ollama' && result.ollamaEndpoint && result.ollamaModel) {
-    //   checkOllamaConnection(result.ollamaEndpoint, result.ollamaModel);
-    // }
+    // Then check if we have a saved popup state to restore
+    if (result.popupState) {
+      restorePopupState(result.popupState);
+    } else {
+      // Run content type detection only if we don't have a saved state
+      detectContentType();
+    }
   } catch (error) {
     console.error('Error loading settings:', error);
     showError('Failed to load settings. Please try again.');
   }
 });
+
+// Function to restore popup state
+function restorePopupState(state) {
+  if (!state) return;
+  
+  // Restore form values
+  if (state.summaryPrompt) {
+    document.getElementById('summaryPrompt').value = state.summaryPrompt;
+  }
+  
+  if (state.contentType) {
+    document.getElementById('contentType').value = state.contentType;
+  }
+  
+  if (state.aiProvider) {
+    document.getElementById('aiProvider').value = state.aiProvider;
+  }
+  
+  // Restore progress and error states
+  if (state.progressVisible) {
+    document.getElementById('progress').style.display = 'block';
+    document.getElementById('progressText').textContent = state.progressText;
+    
+    // If progress message indicates completion, ensure button is enabled
+    if (state.progressText && (
+        state.progressText.includes("completed successfully") || 
+        state.progressText.includes("Conversion and summary completed")
+      )) {
+      document.getElementById('convertBtn').disabled = false;
+      document.getElementById('convertBtn').textContent = 'Convert and Save';
+      
+      // Automatically hide the success message after 5 seconds if it's a completion message
+      setTimeout(() => {
+        document.getElementById('progress').style.display = 'none';
+        // Save state after hiding the message
+        savePopupState();
+      }, 5000);
+    }
+  }
+  
+  if (state.errorVisible) {
+    document.getElementById('errorDisplay').style.display = 'block';
+    document.getElementById('errorDisplay').textContent = state.errorText;
+    
+    // If there's an error, ensure button is enabled
+    document.getElementById('convertBtn').disabled = false;
+    document.getElementById('convertBtn').textContent = 'Convert and Save';
+  }
+  
+  // Restore button state only if not in a completed or error state
+  if (!state.progressText || (
+      !state.progressText.includes("completed successfully") && 
+      !state.progressText.includes("Conversion and summary completed")
+    )) {
+    if (state.convertBtnDisabled) {
+      document.getElementById('convertBtn').disabled = true;
+      document.getElementById('convertBtn').textContent = state.convertBtnText;
+    }
+  }
+}
 
 // Check Ollama connection
 async function checkOllamaConnection(endpoint, model) {
@@ -99,6 +183,8 @@ document.getElementById('contentType').addEventListener('change', (e) => {
     // Save the selected content type
     chrome.storage.local.set({ contentType: type });
   }
+  // Save popup state after content type change
+  savePopupState();
 });
 
 // Configure preset button
@@ -109,6 +195,8 @@ document.getElementById('configPreset').addEventListener('click', () => {
     const presetTemplate = document.getElementById('presetTemplate');
     presetTemplate.value = presetPrompts[type];
     presetConfig.style.display = 'block';
+    // Save popup state after showing config panel
+    savePopupState();
   }
 });
 
@@ -128,6 +216,9 @@ document.getElementById('savePreset').addEventListener('click', () => {
   // Update current prompt
   document.getElementById('summaryPrompt').value = newTemplate;
   document.getElementById('presetConfig').style.display = 'none';
+  
+  // Save popup state after updating preset
+  savePopupState();
 });
 
 // Reset preset to default
@@ -135,11 +226,17 @@ document.getElementById('resetPreset').addEventListener('click', () => {
   const type = document.getElementById('contentType').value;
   const defaultTemplate = defaultPresetPrompts[type];
   document.getElementById('presetTemplate').value = defaultTemplate;
+  
+  // Save popup state after resetting preset
+  savePopupState();
 });
 
 // Close config panel
 document.getElementById('closeConfig').addEventListener('click', () => {
   document.getElementById('presetConfig').style.display = 'none';
+  
+  // Save popup state after closing config panel
+  savePopupState();
 });
 
 // Auto-detect content type
@@ -200,6 +297,9 @@ function detectContentType() {
 // Handle AI provider changes
 document.getElementById('aiProvider').addEventListener('change', (e) => {
   chrome.storage.local.set({ aiProvider: e.target.value });
+  
+  // Save popup state after AI provider change
+  savePopupState();
 });
 
 // Configure API settings
@@ -225,6 +325,22 @@ document.getElementById('configureAPI').addEventListener('click', () => {
 chrome.runtime.onMessage.addListener((message) => {
   if (message.action === "progress") {
     showProgress(message.message);
+    
+    // Check if this is a completion message
+    if (message.message && (
+        message.message.includes("completed successfully") || 
+        message.message.includes("Conversion and summary completed")
+      )) {
+      // Re-enable the convert button when conversion is complete
+      enableConvertButton();
+      
+      // Automatically hide the success message after 5 seconds
+      setTimeout(() => {
+        document.getElementById('progress').style.display = 'none';
+        // Save state after hiding the message
+        savePopupState();
+      }, 5000);
+    }
   } else if (message.action === "error") {
     showError(message.error);
     enableConvertButton();
@@ -233,6 +349,8 @@ chrome.runtime.onMessage.addListener((message) => {
       showProgress("Ollama connection successful!");
       setTimeout(() => {
         document.getElementById('progress').style.display = 'none';
+        // Save state after hiding the message
+        savePopupState();
       }, 3000);
     } else {
       showError(message.error || "Could not connect to Ollama server");
@@ -248,6 +366,9 @@ function showProgress(message) {
   progress.style.display = 'block';
   errorDisplay.style.display = 'none';
   progressText.textContent = message;
+  
+  // Save state after updating UI
+  savePopupState();
 }
 
 function showError(message) {
@@ -257,18 +378,27 @@ function showError(message) {
   progress.style.display = 'none';
   errorDisplay.style.display = 'block';
   errorDisplay.textContent = `Error: ${message}`;
+  
+  // Save state after updating UI
+  savePopupState();
 }
 
 function disableConvertButton() {
   const convertBtn = document.getElementById('convertBtn');
   convertBtn.disabled = true;
   convertBtn.textContent = 'Converting...';
+  
+  // Save state after updating UI
+  savePopupState();
 }
 
 function enableConvertButton() {
   const convertBtn = document.getElementById('convertBtn');
   convertBtn.disabled = false;
   convertBtn.textContent = 'Convert and Save';
+  
+  // Save state after updating UI
+  savePopupState();
 }
 
 // Modify the convert button click handler
@@ -345,4 +475,10 @@ document.getElementById('convertBtn').addEventListener('click', async () => {
     showError(error.message);
     enableConvertButton();
   }
+});
+
+// Add event listener for summary prompt changes
+document.getElementById('summaryPrompt').addEventListener('input', () => {
+  // Save popup state when user types in the prompt area
+  savePopupState();
 }); 

@@ -3,6 +3,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const result = await chrome.storage.local.get([
     'aiProvider',
     'openaiKey',
+    'openaiBaseUrl',
     'openaiModel',
     'ollamaEndpoint',
     'ollamaModel'
@@ -18,6 +19,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (result.openaiKey) {
     document.getElementById('openaiKey').value = result.openaiKey;
   }
+  if (result.openaiBaseUrl) {
+    document.getElementById('openaiBaseUrl').value = result.openaiBaseUrl;
+  }
   if (result.openaiModel) {
     document.getElementById('openaiModel').value = result.openaiModel;
   }
@@ -29,6 +33,20 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (result.ollamaModel) {
     document.getElementById('ollamaModel').value = result.ollamaModel;
   }
+
+  // Setup toggle password button
+  const toggleButton = document.getElementById('toggleOpenaiKey');
+  const openaiKeyInput = document.getElementById('openaiKey');
+  
+  toggleButton.addEventListener('click', () => {
+    if (openaiKeyInput.type === 'password') {
+      openaiKeyInput.type = 'text';
+      toggleButton.textContent = 'Hide';
+    } else {
+      openaiKeyInput.type = 'password';
+      toggleButton.textContent = 'Show';
+    }
+  });
 });
 
 // Toggle between OpenAI and Ollama settings
@@ -133,14 +151,26 @@ async function testOllamaConnection(endpoint, model) {
 document.getElementById('saveSettings').addEventListener('click', async () => {
   const aiProvider = document.getElementById('aiProvider').value;
   const openaiKey = document.getElementById('openaiKey').value;
+  const openaiBaseUrl = document.getElementById('openaiBaseUrl').value;
   const openaiModel = document.getElementById('openaiModel').value;
   const ollamaEndpoint = document.getElementById('ollamaEndpoint').value;
   const ollamaModel = document.getElementById('ollamaModel').value;
 
   try {
     // Validate settings based on provider
-    if (aiProvider === 'openai' && !openaiKey) {
-      throw new Error('OpenAI API key is required');
+    if (aiProvider === 'openai') {
+      if (!openaiKey) {
+        throw new Error('OpenAI API key is required');
+      }
+      if (!openaiBaseUrl) {
+        throw new Error('OpenAI API base URL is required');
+      }
+      // Validate URL format
+      try {
+        new URL(openaiBaseUrl);
+      } catch (e) {
+        throw new Error('Invalid OpenAI API base URL format');
+      }
     }
 
     if (aiProvider === 'ollama') {
@@ -159,12 +189,13 @@ document.getElementById('saveSettings').addEventListener('click', async () => {
     await chrome.storage.local.set({
       aiProvider,
       openaiKey,
+      openaiBaseUrl,
       openaiModel,
       ollamaEndpoint,
       ollamaModel
     });
 
-    showStatus('Settings saved successfully! Connection test passed.', 'success');
+    showStatus('Settings saved successfully!', 'success');
   } catch (error) {
     console.error('Settings save error:', error);
     showStatus(error.message, 'error');

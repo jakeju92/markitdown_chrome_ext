@@ -1,40 +1,74 @@
 // Function to generate summary using OpenAI
-async function generateOpenAISummary(content, prompt, apiKey, model) {
+async function generateOpenAISummary(content, prompt, apiKey, model, baseUrl = 'https://api.openai.com') {
   // Log the prompt and content
   console.log('OpenAI API Request:');
   console.log('==================');
   console.log(`Prompt:\n${prompt}\n`);
   console.log(`Content:\n${content}\n`);
+  console.log(`Base URL: ${baseUrl}`);
   console.log('==================');
 
-  const response = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKey}`
-    },
-    body: JSON.stringify({
-      model: model || 'gpt-3.5-turbo',
-      messages: [
-        {
-          role: 'system',
-          content: 'You are a helpful assistant that summarizes web content.'
-        },
-        {
-          role: 'user',
-          content: `${prompt}\n\nContent to summarize:\n${content}`
+  // Remove trailing slash and ensure proper format
+  baseUrl = baseUrl.replace(/\/$/, '');
+  
+  try {
+    const response = await fetch(`${baseUrl}/v1/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model: model || 'gpt-3.5-turbo',
+        messages: [
+          {
+            role: 'system',
+            content: 'You are a helpful assistant that summarizes web content.'
+          },
+          {
+            role: 'user',
+            content: `${prompt}\n\nContent to summarize:\n${content}`
+          }
+        ],
+        max_tokens: 500
+      })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.text();
+      console.error('OpenAI API error response:', errorData);
+      
+      try {
+        // Try to parse the error as JSON
+        const errorJson = JSON.parse(errorData);
+        if (errorJson.error) {
+          throw new Error(`OpenAI API error: ${errorJson.error.message || errorJson.error.type || 'Unknown error'}`);
         }
-      ],
-      max_tokens: 500
-    })
-  });
+      } catch (parseError) {
+        // If parsing fails, use the status text or raw error data
+        throw new Error(`OpenAI API error (${response.status}): ${response.statusText || errorData}`);
+      }
+    }
 
-  if (!response.ok) {
-    throw new Error(`OpenAI API error: ${response.statusText}`);
+    const data = await response.json();
+    return data.choices[0].message.content.trim();
+  } catch (error) {
+    console.error('OpenAI API request failed:', error);
+    
+    // Check if it's a network error
+    if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
+      throw new Error(
+        `Could not connect to OpenAI API at ${baseUrl}.\n\n` +
+        'Please check:\n' +
+        '1. Your internet connection\n' +
+        '2. The API base URL is correct\n' +
+        '3. No firewall is blocking the connection'
+      );
+    }
+    
+    // Re-throw the error with the original message
+    throw error;
   }
-
-  const data = await response.json();
-  return data.choices[0].message.content.trim();
 }
 
 // Function to generate summary using Ollama
@@ -297,7 +331,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           'openaiKey',
           'openaiModel',
           'ollamaEndpoint',
-          'ollamaModel'
+          'ollamaModel',
+          'openaiBaseUrl'
         ]);
 
         // Send progress update
@@ -385,20 +420,56 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
         // Generate summary
         let summary;
-        if (settings.aiProvider === 'ollama') {
-          try {
+        try {
+          if (settings.aiProvider === 'ollama') {
             summary = await generateOllamaSummary(
               content,
               message.prompt || "Please provide a comprehensive summary of this content.",
               settings.ollamaEndpoint,
               settings.ollamaModel
             );
-          } catch (error) {
-            console.error('Summary generation error:', error);
-            summary = "Failed to generate summary: " + error.message;
+          } else if (settings.aiProvider === 'openai') {
+            // Validate OpenAI settings before making the API call
+            if (!settings.openaiKey) {
+              throw new Error('OpenAI API key is not configured. Please configure it in the settings.');
+            }
+            
+            if (!settings.openaiModel) {
+              console.warn('OpenAI model not specified, using default model');
+            }
+            
+            if (!settings.openaiBaseUrl) {
+              console.warn('OpenAI base URL not specified, using default URL');
+            }
+            
+            try {
+              summary = await generateOpenAISummary(
+                content,
+                message.prompt || "Please provide a comprehensive summary of this content.",
+                settings.openaiKey,
+                settings.openaiModel,
+                settings.openaiBaseUrl
+              );
+            } catch (openaiError) {
+              console.error('OpenAI API error:', openaiError);
+              
+              // Provide more user-friendly error messages for common issues
+              if (openaiError.message.includes('401')) {
+                throw new Error('OpenAI API authentication failed. Please check your API key.');
+              } else if (openaiError.message.includes('429')) {
+                throw new Error('OpenAI API rate limit exceeded. Please try again later.');
+              } else if (openaiError.message.includes('model')) {
+                throw new Error('Invalid model specified. Please check your model selection in settings.');
+              } else {
+                throw openaiError; // Re-throw the original error
+              }
+            }
+          } else {
+            throw new Error('Unknown AI provider selected');
           }
-        } else {
-          throw new Error('Only Ollama is supported for now');
+        } catch (error) {
+          console.error('Summary generation error:', error);
+          summary = "Failed to generate summary: " + error.message;
         }
 
         // Update the file with the summary

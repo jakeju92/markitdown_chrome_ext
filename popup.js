@@ -424,23 +424,24 @@ document.getElementById('convertBtn').addEventListener('click', async () => {
       'ollamaEndpoint',
       'ollamaModel',
       'openaiKey',
+      'openaiBaseUrl',
       'openaiModel'
     ]);
     
-    // // Validate settings
-    // if (aiProvider === 'ollama') {
-    //   if (!settings.ollamaEndpoint || !settings.ollamaModel) {
-    //     throw new Error('Ollama settings not configured. Please configure API settings first.');
-    //   }
+    // Validate settings
+    if (aiProvider === 'ollama') {
+      if (!settings.ollamaEndpoint || !settings.ollamaModel) {
+        throw new Error('Ollama settings not configured. Please configure API settings first.');
+      }
       
-    //   // 添加连接测试，但只在用户点击转换按钮时执行
-    //   showProgress('Testing Ollama connection...');
-    //   await checkOllamaConnection(settings.ollamaEndpoint, settings.ollamaModel);
-    // } else if (aiProvider === 'openai') {
-    //   if (!settings.openaiKey) {
-    //     throw new Error('OpenAI API key not configured. Please configure API settings first.');
-    //   }
-    // }
+      // Test connection when user clicks convert button
+      showProgress('Testing Ollama connection...');
+      await checkOllamaConnection(settings.ollamaEndpoint, settings.ollamaModel);
+    } else if (aiProvider === 'openai') {
+      if (!settings.openaiKey) {
+        throw new Error('OpenAI API key not configured. Please configure API settings first.');
+      }
+    }
     
     // Save current prompt and settings
     await chrome.storage.local.set({ 

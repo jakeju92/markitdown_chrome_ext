@@ -3,17 +3,23 @@
 <head>
   <meta charset="UTF-8">
   <title>MarkItDown</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
   <style>
     :root {
-      --primary-color: #4285F4;
-      --primary-hover: #3367D6;
-      --secondary-color: #f5f5f5;
-      --text-color: #333;
-      --border-color: #e0e0e0;
-      --success-color: #34A853;
-      --error-color: #EA4335;
-      --info-color: #4285F4;
+      --primary-color: #4F46E5;
+      --primary-hover: #4338CA;
+      --text-color: #1F2937;
+      --text-secondary: #6B7280;
+      --bg-color: #F9FAFB;
+      --card-bg: #FFFFFF;
+      --border-color: #E5E7EB;
+      --success-color: #10B981;
+      --error-color: #EF4444;
+      --info-color: #3B82F6;
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
       --radius: 8px;
+      --transition: all 0.2s ease;
     }
     
     * {
@@ -24,10 +30,10 @@
     
     body {
       width: 380px;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
       font-size: 14px;
       color: var(--text-color);
-      background-color: #fff;
+      background-color: var(--bg-color);
       line-height: 1.5;
     }
     
@@ -42,48 +48,65 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 4px;
+      margin-bottom: 12px;
+      text-align: center;
     }
     
     .header h1 {
-      font-size: 18px;
-      font-weight: 600;
-      color: var(--primary-color);
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text-color);
+      width: 100%;
+    }
+
+    .card {
+      background-color: var(--card-bg);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 16px;
+      margin-bottom: 16px;
     }
 
     .section {
-      margin-bottom: 12px;
+      margin-bottom: 16px;
     }
     
     .section-title {
-      font-weight: 600;
+      font-weight: 500;
       font-size: 14px;
       margin-bottom: 8px;
       color: var(--text-color);
     }
     
-    select, textarea, button, input {
+    .input-field {
       width: 100%;
-      padding: 10px 12px;
+      padding: 10px 14px;
       border: 1px solid var(--border-color);
       border-radius: var(--radius);
       font-size: 14px;
-      background-color: #fff;
-      color: var(--text-color);
-      transition: all 0.2s ease;
+      transition: var(--transition);
+      background-color: white;
+      font-family: 'Inter', sans-serif;
     }
     
-    select:focus, textarea:focus, button:focus, input:focus {
+    .input-field:focus {
       outline: none;
       border-color: var(--primary-color);
-      box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.1);
+      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
     }
     
-    textarea {
+    textarea.input-field {
       min-height: 100px;
       resize: vertical;
-      font-family: inherit;
       line-height: 1.5;
+    }
+    
+    .select-field {
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%236B7280' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      padding-right: 36px;
     }
     
     .type-selector {
@@ -96,96 +119,113 @@
       flex-grow: 1;
     }
     
-    #configPreset {
+    .icon-button {
+      background-color: #F3F4F6;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius);
       width: 36px;
-      padding: 8px;
+      height: 36px;
       display: flex;
       align-items: center;
       justify-content: center;
-      background-color: var(--secondary-color);
-      border-color: var(--border-color);
-      font-size: 16px;
       cursor: pointer;
+      transition: var(--transition);
+      flex-shrink: 0;
     }
     
-    #configPreset:hover {
-      background-color: #e8e8e8;
+    .icon-button:hover {
+      background-color: #E5E7EB;
     }
     
     .preset-config {
-      background-color: #f9f9f9;
+      background-color: #F3F4F6;
       border: 1px solid var(--border-color);
       border-radius: var(--radius);
-      padding: 15px;
-      margin-top: 10px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      padding: 16px;
+      margin-top: 12px;
+      margin-bottom: 16px;
     }
     
     .preset-config h3 {
       font-size: 15px;
-      margin-bottom: 10px;
-      font-weight: 500;
+      margin-bottom: 12px;
+      font-weight: 600;
+      color: var(--text-color);
     }
     
     .button-group {
       display: flex;
       gap: 8px;
-      margin-top: 10px;
+      margin-top: 12px;
     }
     
     .button-group button {
       flex: 1;
-      padding: 8px;
+      padding: 8px 12px;
       font-size: 13px;
+      font-weight: 500;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius);
+      background-color: white;
+      color: var(--text-color);
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    
+    .button-group button:hover {
+      background-color: #F3F4F6;
     }
     
     .provider-section {
       display: flex;
       align-items: flex-end;
       gap: 10px;
-      margin-bottom: 5px;
     }
     
     .provider-select {
       flex-grow: 1;
     }
     
-    #configureAPI {
-      width: auto;
-      background-color: var(--secondary-color);
+    .secondary-button {
+      background-color: #F3F4F6;
       color: var(--text-color);
-      border-color: var(--border-color);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius);
+      padding: 10px 14px;
       font-size: 13px;
-      padding: 10px 12px;
+      font-weight: 500;
       white-space: nowrap;
       cursor: pointer;
+      transition: var(--transition);
     }
     
-    #configureAPI:hover {
-      background-color: #e8e8e8;
+    .secondary-button:hover {
+      background-color: #E5E7EB;
     }
     
-    #convertBtn {
+    .btn-primary {
+      width: 100%;
       background-color: var(--primary-color);
       color: white;
       border: none;
       padding: 12px;
-      font-weight: 500;
-      margin-top: 8px;
+      border-radius: var(--radius);
+      font-size: 14px;
+      font-weight: 600;
       cursor: pointer;
-      transition: background-color 0.2s ease;
+      transition: var(--transition);
     }
     
-    #convertBtn:hover {
+    .btn-primary:hover {
       background-color: var(--primary-hover);
     }
     
-    #convertBtn:disabled {
-      background-color: #bdbdbd;
+    .btn-primary:disabled {
+      background-color: #9CA3AF;
       cursor: not-allowed;
     }
     
-    .status {
+    .status-message {
       padding: 12px;
       border-radius: var(--radius);
       font-size: 13px;
@@ -194,16 +234,16 @@
       line-height: 1.4;
     }
     
-    #progress {
-      background-color: rgba(66, 133, 244, 0.1);
+    .status-info {
+      background-color: rgba(59, 130, 246, 0.1);
       color: var(--info-color);
-      border: 1px solid rgba(66, 133, 244, 0.2);
+      border: 1px solid rgba(59, 130, 246, 0.2);
     }
     
-    #errorDisplay {
-      background-color: rgba(234, 67, 53, 0.1);
+    .status-error {
+      background-color: rgba(239, 68, 68, 0.1);
       color: var(--error-color);
-      border: 1px solid rgba(234, 67, 53, 0.2);
+      border: 1px solid rgba(239, 68, 68, 0.2);
     }
     
     .spinner {
@@ -222,10 +262,10 @@
     }
     
     .footer {
-      margin-top: 8px;
+      margin-top: 16px;
       text-align: center;
       font-size: 12px;
-      color: #757575;
+      color: var(--text-secondary);
     }
     
     .footer a {
@@ -244,58 +284,60 @@
       <h1>MarkItDown</h1>
     </div>
     
-    <div class="section">
-      <div class="section-title">Content Type</div>
-      <div class="type-selector">
-        <div class="type-select">
-          <select id="contentType">
-            <option value="custom">Custom Prompt</option>
-            <option value="paper">Academic Paper</option>
-            <option value="news">News Article</option>
-            <option value="docs">Technical Documentation</option>
-            <option value="blog">Blog Post</option>
-          </select>
+    <div class="card">
+      <div class="section">
+        <div class="section-title">Content Type</div>
+        <div class="type-selector">
+          <div class="type-select">
+            <select id="contentType" class="input-field select-field">
+              <option value="custom">Custom Prompt</option>
+              <option value="paper">Academic Paper</option>
+              <option value="news">News Article</option>
+              <option value="docs">Technical Documentation</option>
+              <option value="blog">Blog Post</option>
+            </select>
+          </div>
+          <button id="configPreset" class="icon-button" title="Configure Preset">⚙️</button>
         </div>
-        <button id="configPreset" title="Configure Preset">⚙️</button>
       </div>
-    </div>
-    
-    <div id="presetConfig" class="preset-config" style="display: none;">
-      <h3>Configure Preset Template</h3>
-      <textarea id="presetTemplate"></textarea>
-      <div class="button-group">
-        <button id="savePreset">Save</button>
-        <button id="resetPreset">Reset</button>
-        <button id="closeConfig">Close</button>
-      </div>
-    </div>
-
-    <div class="section">
-      <div class="section-title">Summary Prompt</div>
-      <textarea id="summaryPrompt" placeholder="Enter your custom prompt or select a preset above"></textarea>
-    </div>
-
-    <div class="section">
-      <div class="provider-section">
-        <div class="provider-select">
-          <div class="section-title">AI Provider</div>
-          <select id="aiProvider">
-            <option value="openai">OpenAI</option>
-            <option value="ollama">Ollama</option>
-          </select>
+      
+      <div id="presetConfig" class="preset-config" style="display: none;">
+        <h3>Configure Preset Template</h3>
+        <textarea id="presetTemplate" class="input-field"></textarea>
+        <div class="button-group">
+          <button id="savePreset">Save</button>
+          <button id="resetPreset">Reset</button>
+          <button id="closeConfig">Close</button>
         </div>
-        <button id="configureAPI" title="Configure API Settings">Configure API</button>
+      </div>
+
+      <div class="section">
+        <div class="section-title">Summary Prompt</div>
+        <textarea id="summaryPrompt" class="input-field" placeholder="Enter your custom prompt or select a preset above"></textarea>
+      </div>
+
+      <div class="section">
+        <div class="provider-section">
+          <div class="provider-select">
+            <div class="section-title">AI Provider</div>
+            <select id="aiProvider" class="input-field select-field">
+              <option value="openai">OpenAI</option>
+              <option value="ollama">Ollama</option>
+            </select>
+          </div>
+          <button id="configureAPI" class="secondary-button" title="Configure API Settings">Configure API</button>
+        </div>
       </div>
     </div>
 
-    <button id="convertBtn">Convert and Save</button>
+    <button id="convertBtn" class="btn-primary">Convert and Save</button>
     
-    <div id="progress" class="status">
+    <div id="progress" class="status-message status-info">
       <span class="spinner"></span>
       <span id="progressText">Initializing...</span>
     </div>
     
-    <div id="errorDisplay" class="status"></div>
+    <div id="errorDisplay" class="status-message status-error"></div>
     
     <div class="footer">
       <span>Automatically convert web content to Markdown</span>
@@ -304,5 +346,4 @@
   
   <script src="popup.js"></script>
 </body>
-</html> 
 </html> 

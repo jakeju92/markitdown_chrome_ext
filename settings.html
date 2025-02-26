@@ -97,6 +97,32 @@
       color: #1565C0;
       border: 1px solid #90CAF9;
     }
+    .input-group {
+      position: relative;
+      display: flex;
+    }
+    .input-group input {
+      flex: 1;
+      border-top-right-radius: 0;
+      border-bottom-right-radius: 0;
+    }
+    .toggle-password {
+      background: #e0e0e0;
+      color: #555;
+      border: 1px solid #ddd;
+      border-left: none;
+      padding: 0 12px;
+      border-top-right-radius: 4px;
+      border-bottom-right-radius: 4px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background-color 0.2s;
+    }
+    .toggle-password:hover {
+      background: #d0d0d0;
+    }
   </style>
 </head>
 <body>
@@ -114,13 +140,23 @@
       <div id="openaiSettings">
         <div class="form-group">
           <label for="openaiKey">OpenAI API Key:</label>
-          <input type="password" id="openaiKey" placeholder="sk-...">
+          <div class="input-group">
+            <input type="password" id="openaiKey" placeholder="sk-...">
+            <button type="button" class="toggle-password" id="toggleOpenaiKey">Show</button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="openaiBaseUrl">API Base URL:</label>
+          <input type="text" id="openaiBaseUrl" value="https://api.openai.com" placeholder="e.g., https://api.openai.com">
         </div>
         <div class="form-group">
           <label for="openaiModel">Model:</label>
           <select id="openaiModel">
-            <option value="gpt-4">GPT-4</option>
-            <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+            <option value="gpt-4o">GPT-4o</option>
+            <option value="gpt-4o-mini">GPT-4o-mini</option>
+            <option value="o1-preview">GPT-o1-preview</option>
+            <option value="o1-mini">GPT-o1-mini</option>
+            <option value="o3-mini">GPT-o3-mini</option>
           </select>
         </div>
       </div>

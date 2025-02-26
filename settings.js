@@ -11,7 +11,17 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Set AI provider
   if (result.aiProvider) {
-    document.getElementById('aiProvider').value = result.aiProvider;
+    // Update the tab UI
+    document.querySelectorAll('.provider-option').forEach(tab => {
+      tab.classList.remove('active');
+    });
+    
+    const activeTab = document.querySelector(`.provider-option[data-provider="${result.aiProvider}"]`);
+    if (activeTab) {
+      activeTab.classList.add('active');
+    }
+    
+    // Show the appropriate settings section
     toggleProviderSettings(result.aiProvider);
   }
 
@@ -47,13 +57,24 @@ document.addEventListener('DOMContentLoaded', async () => {
       toggleButton.textContent = 'Show';
     }
   });
+  
+  // Setup provider tabs
+  document.querySelectorAll('.provider-option').forEach(tab => {
+    tab.addEventListener('click', () => {
+      // Update active tab UI
+      document.querySelectorAll('.provider-option').forEach(t => {
+        t.classList.remove('active');
+      });
+      tab.classList.add('active');
+      
+      // Show corresponding settings
+      const provider = tab.getAttribute('data-provider');
+      toggleProviderSettings(provider);
+    });
+  });
 });
 
 // Toggle between OpenAI and Ollama settings
-document.getElementById('aiProvider').addEventListener('change', (e) => {
-  toggleProviderSettings(e.target.value);
-});
-
 function toggleProviderSettings(provider) {
   const openaiSettings = document.getElementById('openaiSettings');
   const ollamaSettings = document.getElementById('ollamaSettings');
@@ -149,7 +170,10 @@ async function testOllamaConnection(endpoint, model) {
 
 // Save settings
 document.getElementById('saveSettings').addEventListener('click', async () => {
-  const aiProvider = document.getElementById('aiProvider').value;
+  // Get the active provider from the UI
+  const activeTab = document.querySelector('.provider-option.active');
+  const aiProvider = activeTab ? activeTab.getAttribute('data-provider') : 'openai';
+  
   const openaiKey = document.getElementById('openaiKey').value;
   const openaiBaseUrl = document.getElementById('openaiBaseUrl').value;
   const openaiModel = document.getElementById('openaiModel').value;
@@ -205,7 +229,16 @@ document.getElementById('saveSettings').addEventListener('click', async () => {
 function showStatus(message, type) {
   const status = document.getElementById('status');
   status.textContent = message;
-  status.className = `status ${type}`;
+  status.className = 'status-message';
+  
+  if (type === 'success') {
+    status.classList.add('status-success');
+  } else if (type === 'error') {
+    status.classList.add('status-error');
+  } else if (type === 'info') {
+    status.classList.add('status-info');
+  }
+  
   status.style.display = 'block';
 
   // Only auto-hide success messages

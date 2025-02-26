@@ -3,155 +3,280 @@
 <head>
   <meta charset="UTF-8">
   <title>MarkItDown Settings</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
   <style>
-    body {
-      width: 100%;
-      min-height: 100vh;
+    :root {
+      --primary-color: #4F46E5;
+      --primary-hover: #4338CA;
+      --text-color: #1F2937;
+      --text-secondary: #6B7280;
+      --bg-color: #F9FAFB;
+      --card-bg: #FFFFFF;
+      --border-color: #E5E7EB;
+      --success-color: #10B981;
+      --error-color: #EF4444;
+      --info-color: #3B82F6;
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      --radius: 8px;
+      --transition: all 0.2s ease;
+    }
+
+    * {
       margin: 0;
-      padding: 20px;
+      padding: 0;
       box-sizing: border-box;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      line-height: 1.5;
+      min-height: 100vh;
       display: flex;
       justify-content: center;
-      align-items: flex-start;
-      background-color: #f5f5f5;
+      padding: 40px 20px;
     }
+
     .container {
       width: 100%;
-      max-width: 500px;
+      max-width: 560px;
+    }
+
+    .header {
+      margin-bottom: 24px;
+      text-align: center;
+    }
+
+    .header h1 {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--text-color);
+      margin-bottom: 8px;
+    }
+
+    .header p {
+      color: var(--text-secondary);
+      font-size: 14px;
+    }
+
+    .card {
+      background-color: var(--card-bg);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+
+    .card-header {
       display: flex;
-      flex-direction: column;
-      gap: 20px;
-      background-color: white;
-      padding: 30px;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    }
-    .section {
-      border: 1px solid #eee;
-      padding: 20px;
-      border-radius: 6px;
-      background-color: #fafafa;
-    }
-    h2 {
-      margin-top: 0;
-      color: #333;
-      font-size: 1.5em;
+      align-items: center;
       margin-bottom: 20px;
     }
-    .form-group {
-      margin-bottom: 15px;
+
+    .card-icon {
+      width: 32px;
+      height: 32px;
+      background-color: var(--primary-color);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: 12px;
+      color: white;
+      font-weight: bold;
     }
+
+    .card-title {
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group:last-child {
+      margin-bottom: 0;
+    }
+
     label {
       display: block;
+      font-size: 14px;
+      font-weight: 500;
       margin-bottom: 8px;
-      color: #555;
-      font-weight: 500;
+      color: var(--text-color);
     }
-    input, select {
+
+    .input-field {
       width: 100%;
-      padding: 10px;
-      border: 1px solid #ddd;
-      border-radius: 4px;
+      padding: 10px 14px;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius);
       font-size: 14px;
-      box-sizing: border-box;
+      transition: var(--transition);
+      background-color: white;
     }
-    input:focus, select:focus {
+
+    .input-field:focus {
       outline: none;
-      border-color: #2196F3;
-      box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.1);
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
     }
-    button {
-      background: #2196F3;
-      color: white;
-      border: none;
-      padding: 12px 24px;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 14px;
-      font-weight: 500;
-      transition: background-color 0.2s;
-    }
-    button:hover {
-      background: #1976D2;
-    }
-    .status {
-      margin-top: 10px;
-      padding: 12px;
-      border-radius: 4px;
-      display: none;
-      font-size: 14px;
-    }
-    .success {
-      background: #E8F5E9;
-      color: #2E7D32;
-      border: 1px solid #A5D6A7;
-    }
-    .error {
-      background: #FFEBEE;
-      color: #C62828;
-      border: 1px solid #FFCDD2;
-    }
-    .info {
-      background: #E3F2FD;
-      color: #1565C0;
-      border: 1px solid #90CAF9;
-    }
+
     .input-group {
-      position: relative;
       display: flex;
+      position: relative;
     }
-    .input-group input {
+
+    .input-group .input-field {
       flex: 1;
       border-top-right-radius: 0;
       border-bottom-right-radius: 0;
     }
-    .toggle-password {
-      background: #e0e0e0;
-      color: #555;
-      border: 1px solid #ddd;
+
+    .toggle-btn {
+      background-color: #F3F4F6;
+      border: 1px solid var(--border-color);
       border-left: none;
-      padding: 0 12px;
-      border-top-right-radius: 4px;
-      border-bottom-right-radius: 4px;
+      padding: 0 14px;
+      border-top-right-radius: var(--radius);
+      border-bottom-right-radius: var(--radius);
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-secondary);
       cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: background-color 0.2s;
+      transition: var(--transition);
     }
-    .toggle-password:hover {
-      background: #d0d0d0;
+
+    .toggle-btn:hover {
+      background-color: #E5E7EB;
+    }
+
+    .select-field {
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%236B7280' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      padding-right: 36px;
+    }
+
+    .provider-switch {
+      display: flex;
+      background-color: #F3F4F6;
+      border-radius: var(--radius);
+      padding: 4px;
+      margin-bottom: 24px;
+    }
+
+    .provider-option {
+      flex: 1;
+      text-align: center;
+      padding: 10px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      border-radius: 4px;
+      transition: var(--transition);
+      color: var(--text-secondary);
+    }
+
+    .provider-option.active {
+      background-color: white;
+      color: var(--primary-color);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .settings-section {
+      margin-top: 16px;
+      transition: var(--transition);
+    }
+
+    .btn-primary {
+      width: 100%;
+      background-color: var(--primary-color);
+      color: white;
+      border: none;
+      padding: 12px;
+      border-radius: var(--radius);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .btn-primary:hover {
+      background-color: var(--primary-hover);
+    }
+
+    .status-message {
+      margin-top: 16px;
+      padding: 12px;
+      border-radius: var(--radius);
+      font-size: 14px;
+      display: none;
+    }
+
+    .status-success {
+      background-color: rgba(16, 185, 129, 0.1);
+      color: var(--success-color);
+      border: 1px solid rgba(16, 185, 129, 0.2);
+    }
+
+    .status-error {
+      background-color: rgba(239, 68, 68, 0.1);
+      color: var(--error-color);
+      border: 1px solid rgba(239, 68, 68, 0.2);
+    }
+
+    .status-info {
+      background-color: rgba(59, 130, 246, 0.1);
+      color: var(--info-color);
+      border: 1px solid rgba(59, 130, 246, 0.2);
+    }
+
+    .footer {
+      text-align: center;
+      margin-top: 32px;
+      color: var(--text-secondary);
+      font-size: 13px;
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <div class="section">
-      <h2>API Settings</h2>
-      <div class="form-group">
-        <label for="aiProvider">Default AI Provider:</label>
-        <select id="aiProvider">
-          <option value="openai">OpenAI</option>
-          <option value="ollama">Ollama</option>
-        </select>
+    <div class="header">
+      <h1>MarkItDown Settings</h1>
+      <p>Configure your AI providers and preferences</p>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon">AI</div>
+        <div class="card-title">AI Provider Settings</div>
       </div>
 
-      <div id="openaiSettings">
+      <div class="provider-switch">
+        <div class="provider-option active" data-provider="openai" id="openaiTab">OpenAI</div>
+        <div class="provider-option" data-provider="ollama" id="ollamaTab">Ollama</div>
+      </div>
+
+      <div class="settings-section" id="openaiSettings">
         <div class="form-group">
-          <label for="openaiKey">OpenAI API Key:</label>
+          <label for="openaiKey">API Key</label>
           <div class="input-group">
-            <input type="password" id="openaiKey" placeholder="sk-...">
-            <button type="button" class="toggle-password" id="toggleOpenaiKey">Show</button>
+            <input type="password" id="openaiKey" class="input-field" placeholder="sk-...">
+            <button type="button" class="toggle-btn" id="toggleOpenaiKey">Show</button>
           </div>
         </div>
         <div class="form-group">
-          <label for="openaiBaseUrl">API Base URL:</label>
-          <input type="text" id="openaiBaseUrl" value="https://api.openai.com" placeholder="e.g., https://api.openai.com">
+          <label for="openaiBaseUrl">API Base URL</label>
+          <input type="text" id="openaiBaseUrl" class="input-field" value="https://api.openai.com" placeholder="e.g., https://api.openai.com">
         </div>
         <div class="form-group">
-          <label for="openaiModel">Model:</label>
-          <select id="openaiModel">
+          <label for="openaiModel">Model</label>
+          <select id="openaiModel" class="input-field select-field">
             <option value="gpt-4o">GPT-4o</option>
             <option value="gpt-4o-mini">GPT-4o-mini</option>
             <option value="o1-preview">GPT-o1-preview</option>
@@ -161,20 +286,24 @@
         </div>
       </div>
       
-      <div id="ollamaSettings" style="display: none;">
+      <div class="settings-section" id="ollamaSettings" style="display: none;">
         <div class="form-group">
-          <label for="ollamaEndpoint">Ollama Endpoint:</label>
-          <input type="text" id="ollamaEndpoint" value="http://localhost:11434" placeholder="e.g., http://localhost:11434">
+          <label for="ollamaEndpoint">Endpoint URL</label>
+          <input type="text" id="ollamaEndpoint" class="input-field" value="http://localhost:11434" placeholder="e.g., http://localhost:11434">
         </div>
         <div class="form-group">
-          <label for="ollamaModel">Model Name:</label>
-          <input type="text" id="ollamaModel" placeholder="e.g., llama2, qwen2.5:7b">
+          <label for="ollamaModel">Model Name</label>
+          <input type="text" id="ollamaModel" class="input-field" placeholder="e.g., llama2, qwen2.5:7b">
         </div>
       </div>
     </div>
 
-    <button id="saveSettings">Save Settings</button>
-    <div id="status" class="status"></div>
+    <button id="saveSettings" class="btn-primary">Save Settings</button>
+    <div id="status" class="status-message"></div>
+
+    <div class="footer">
+      MarkItDown Extension &copy; 2024
+    </div>
   </div>
   <script src="settings.js"></script>
 </body>

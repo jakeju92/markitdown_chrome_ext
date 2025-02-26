@@ -1,4 +1,5 @@
 # MarkItDown Chrome Extension
+<img width="394" alt="image" src="https://github.com/user-attachments/assets/7dc02a0a-4162-4daa-b116-c0207db2925e" />
 
 ## Introduction
 

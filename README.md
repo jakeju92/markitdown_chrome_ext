@@ -1,81 +1,84 @@
 # MarkItDown Chrome Extension
 
-MarkItDown is a Chrome extension that converts web pages to markdown format with AI-powered summaries. It supports both OpenAI and Ollama for generating summaries.
+## Introduction
+
+MarkItDown is a powerful Chrome extension that transforms web pages into well-formatted markdown documents with AI-powered summaries. It's designed for researchers, writers, developers, and anyone who needs to save, organize, and summarize web content efficiently. Especially useful for those who use Obsidian as their note-taking app.
+
+The extension leverages advanced AI capabilities through either OpenAI's API or local Ollama models to generate comprehensive summaries of web content, making it perfect for research, content curation, and knowledge management.
 
 ## Features
 
-- Convert web pages to markdown format
-- Generate AI-powered summaries using OpenAI or Ollama
-- Customizable summary prompts with preset templates
-- Support for different content types (Academic Papers, News Articles, Technical Documentation, Blog Posts)
-- Save markdown files locally with organized structure
+- **Web Page to Markdown Conversion**: Instantly convert any web page to clean, well-formatted markdown
+- **AI-Powered Summaries**: Generate intelligent summaries using:
+  - OpenAI API (GPT models)
+  - Ollama API (local models)
+- **Customizable Summary Prompts**: Choose from preset templates or create your own:
+  - Academic Paper
+  - News Article
+  - Technical Documentation
+  - Blog Post
+- **Flexible Configuration**:
+  - Custom OpenAI API base URL support
+  - Model selection for both OpenAI and Ollama
+  - Detailed error handling with helpful troubleshooting messages
+- **User-Friendly Interface**:
+  - Clean, modern UI design
+  - Simple one-click conversion process
+  - Progress indicators during conversion and summary generation
+- **Privacy-Focused**:
+  - Local processing of HTML-to-markdown conversion
+  - Option to use local Ollama models instead of cloud APIs
+  - Secure storage of API keys
 
-## Installation
+## TODOs
 
-1. Clone this repository or download the source code
-2. Open Chrome and navigate to `chrome://extensions/`
-3. Enable "Developer mode" in the top right corner
-4. Click "Load unpacked" and select the extension directory
+- [ ] Add support for PDF website export
+- [ ] Add support for more AI providers (Claude, Anthropic, etc.)
+- [ ] Add export options for different formats (PDF etc.)
+- [ ] Implement content type auto-detection to suggest appropriate summary templates
 
-## Configuration
+## Installation Tutorial
 
-1. Click the extension icon in Chrome toolbar
-2. Click the "Configure API Settings" link
-3. Choose your preferred AI provider (OpenAI or Ollama)
-4. Configure the API settings:
-   - For OpenAI: Enter your API key and select the model
-   - For Ollama: Configure the endpoint URL and model name
+### Method 1: Loading the Unpacked Extension (Development)
 
-## Usage
+1. **Clone the Repository**
+   ```bash
+   git clone https://github.com/yourusername/markitdown_chrome_ext.git
+   cd markitdown_chrome_ext
+   ```
 
-1. Navigate to any webpage you want to convert
-2. Click the MarkItDown extension icon
-3. Select a content type or use a custom prompt
-4. Click "Convert and Save"
-5. Choose where to save the markdown file
+2. **Install Dependencies** (if needed)
+   ```bash
+   ./download_deps.sh
+   ```
 
-## Preset Templates
+3. **Load in Chrome**
+   - Open Chrome and navigate to `chrome://extensions/`
+   - Enable "Developer mode" using the toggle in the top-right corner
+   - Click "Load unpacked" and select the extension directory
+   - The MarkItDown icon should appear in your Chrome toolbar
 
-The extension includes preset templates for different content types:
+4. **Configure the Extension**
+   - Click the MarkItDown icon in the toolbar
+   - Click "Configure API Settings"
+   - Choose your preferred AI provider:
+     - For OpenAI: Enter your API key, base URL (optional), and select a model
+     - For Ollama: Configure the endpoint URL and model name
+   - Save your settings
 
-- Academic Paper
-- News Article
-- Technical Documentation
-- Blog Post
+### Method 2: Installing from Chrome Web Store (Coming Soon)
 
-You can customize these templates or create your own in the extension popup.
+1. Visit the [Chrome Web Store](https://chrome.google.com/webstore) (link will be updated when available)
+2. Search for "MarkItDown" or use the direct link
+3. Click "Add to Chrome"
+4. Configure your API settings as described above
 
-## Development
+## About Me
 
-### Prerequisites
+I'm a passionate developer focused on creating tools that enhance productivity and knowledge management. With a background in AI and computer science, I built MarkItDown to solve my own challenges with research and note-taking.
 
-- Chrome browser
-- Node.js and npm (for development)
-- OpenAI API key or Ollama setup for AI summaries
+I believe in creating tools that respect user privacy while leveraging the power of AI to enhance human capabilities. MarkItDown represents my commitment to open-source development and creating practical solutions for everyday problems.
 
-### Project Structure
+---
 
-```
-markitdown/
-├── manifest.json        # Extension configuration
-├── popup.html          # Extension popup UI
-├── popup.js           # Popup functionality
-├── background.js      # Core extension logic
-├── settings.html      # API settings page
-├── settings.js        # Settings functionality
-└── turndown.js        # HTML to Markdown conversion
-```
-
-### Building from Source
-
-1. Clone the repository
-2. Install dependencies (if any)
-3. Load the extension in Chrome as an unpacked extension
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details. 
+If you find MarkItDown useful, consider starring the repository and contributing to its development. Your feedback and contributions are always welcome! 
